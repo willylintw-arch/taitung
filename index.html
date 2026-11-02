@@ -910,27 +910,57 @@
             });
         });
 
-        // 假刪除 (移入封存區)
+        // 假刪除 (移入封存區，並同步將試算表狀態改為「刪除」)
         function softDeleteItem(id) {
             const item = scheduleItems.find(x => x.id === id);
             if (item) {
                 item.isDeleted = true;
                 item.status = 'cancel';
                 renderLanes();
+
+                // 同步更新 Google Sheets 資料狀態
+                fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "updateStatus",
+                        id: id,
+                        dataStatus: "刪除",
+                        willingnessStatus: "取消前往"
+                    })
+                }).catch(err => {
+                    console.error("試算表刪除狀態同步失敗：", err);
+                });
             }
         }
 
-        // 復原封存項目
+        // 復原封存項目 (同步將試算表狀態改回「正常」)
         function restoreItem(id) {
             const item = scheduleItems.find(x => x.id === id);
             if (item) {
                 item.isDeleted = false;
                 item.status = 'confirm';
                 renderLanes();
+
+                // 同步將 Google Sheets 資料狀態改回正常
+                fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "updateStatus",
+                        id: id,
+                        dataStatus: "正常",
+                        willingnessStatus: "確認前往"
+                    })
+                }).catch(err => {
+                    console.error("試算表復原狀態同步失敗：", err);
+                });
             }
         }
 
-        // 【新增】永久刪除 (從資料清單徹底移除)
+        // 【永久刪除】(從前端清單徹底移除，並同步刪除試算表對應資料列)
         function hardDeleteItem(id) {
             const idx = scheduleItems.findIndex(x => x.id === id);
             if (idx !== -1) {
@@ -939,6 +969,19 @@
                 if (confirmed) {
                     scheduleItems.splice(idx, 1);
                     renderLanes();
+
+                    // 同步發送永久刪除指令給 Google Sheets
+                    fetch(GAS_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            action: "hardDelete",
+                            id: id
+                        })
+                    }).catch(err => {
+                        console.error("試算表永久刪除同步失敗：", err);
+                    });
                 }
             }
         }
