@@ -91,6 +91,7 @@
             cursor: grab;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none; /* 關鍵：防止 iPhone 長按彈出系統操作選單 */
             touch-action: pan-y;
 
             transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
@@ -796,15 +797,20 @@
         let draggedItemId = null;
 
         function handleDragStart(e) {
-            draggedItemId = this.dataset.id;
-            this.classList.add('card-dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        }
+    const targetCard = e.target.closest('.card-draggable') || this;
+    draggedItemId = targetCard.dataset.id;
+    targetCard.classList.add('card-dragging');
+    if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', draggedItemId);
+    }
+}
 
-        function handleDragEnd() {
-            this.classList.remove('card-dragging');
-            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
-        }
+function handleDragEnd() {
+    document.querySelectorAll('.card-dragging').forEach(el => el.classList.remove('card-dragging'));
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
 
         function setupDropZones() {
             travelDates.forEach(d => {
@@ -1007,13 +1013,17 @@
                 updateDateSelectOptions();
         renderLanes();
 
-        // 啟動行動端長按觸控拖曳 (長按 200 毫秒啟動)
+                // 啟動行動端長按觸控拖曳 (長按 250 毫秒啟動)
         if (window.MobileDragDrop) {
             MobileDragDrop.polyfill({
                 dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
-                holdToDrag: 200
+                holdToDrag: 250
             });
+
+            // 關鍵：讓 Polyfill 順利接管手機滑動手勢，使卡片能順暢移動
+            window.addEventListener('touchmove', function() {}, { passive: false });
         }
+
     </script>
 </body>
 </html>
