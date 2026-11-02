@@ -577,20 +577,20 @@
             renderLanes();
         }
 
-        function setDisplayMode(mode) {
+                function setDisplayMode(mode) {
             currentDisplayMode = mode;
             const photoBtn = document.getElementById('mode-photo-btn');
             const textBtn = document.getElementById('mode-text-btn');
             const indicator = document.getElementById('mode-text-indicator');
 
             if (mode === 'photo') {
-                photoBtn.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition";
-                textBtn.className = "px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition";
-                indicator.innerText = "圖片為主 (含照片展示)";
+                if (photoBtn) photoBtn.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition";
+                if (textBtn) textBtn.className = "px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition";
+                if (indicator) indicator.innerText = "圖片為主 (含照片展示)";
             } else {
-                textBtn.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition";
-                photoBtn.className = "px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition";
-                indicator.innerText = "文字為主 (簡潔易讀)";
+                if (textBtn) textBtn.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition";
+                if (photoBtn) photoBtn.className = "px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition";
+                if (indicator) indicator.innerText = "文字為主 (簡潔易讀)";
             }
 
             renderLanes();
