@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 臺東深度舒活之旅 - 吉卜力風排程戰情室</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        :root {
+            --ghibli-forest: #2D5A43;
+            --ghibli-leaf: #4E7C59;
+            --ghibli-wood: #8B5A2B;
+            --ghibli-sand: #F7F4EB;
+            --ghibli-card: #FCFAF2;
+            --ghibli-text: #232B28;
+        }
+
+        body {
+            background-color: var(--ghibli-sand);
+            color: var(--ghibli-text);
+            font-size: 17px; /* 適合60歲長輩閱讀之清晰大字 */
+            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
+            overflow-x: hidden;
+        }
+
+        .ghibli-header {
+            background: linear-gradient(135deg, #2D5A43 0%, #3D7055 100%);
+            box-shadow: 0 4px 15px rgba(45, 90, 67, 0.2);
+        }
+
+        .ghibli-card {
+            background-color: var(--ghibli-card);
+            border: 2px solid #E5DFD1;
+            box-shadow: 0 4px 12px rgba(78, 124, 89, 0.08);
+            border-radius: 18px;
+        }
+
+        .ghibli-btn {
+            background-color: var(--ghibli-forest);
+            color: white;
+            transition: all 0.2s ease;
+        }
+        .ghibli-btn:hover {
+            background-color: #224432;
+            transform: translateY(-1px);
+        }
+
+        /* 橫向滑動容器美化 */
+        .horizontal-scroll-container {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 1.5rem;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .horizontal-scroll-container::-webkit-scrollbar {
+            height: 10px;
+        }
+        .horizontal-scroll-container::-webkit-scrollbar-track {
+            background: #EBE4D5;
+            border-radius: 8px;
+        }
+        .horizontal-scroll-container::-webkit-scrollbar-thumb {
+            background: #8FA89B;
+            border-radius: 8px;
+        }
+
+        .lane-column {
+            flex: 0 0 360px; /* 固定大寬度，確保卡片大氣不擠壓 */
+            scroll-snap-align: start;
+        }
+
+        /* 拖曳互動效果 */
+        .card-draggable {
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+        .card-draggable:active { cursor: grabbing; }
+        .card-dragging {
+            opacity: 0.45;
+            transform: scale(0.97);
+            border: 2px dashed #4E7C59 !important;
+        }
+        .drag-over {
+            border-top: 4px solid #2D5A43 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- 頂部標題與快捷導覽列 (已移除 API Key 按鈕) -->
+    <header class="ghibli-header text-white sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-wide flex items-center gap-2">
+                    <span>🍃</span> 2026 臺東舒活之旅・行程戰情室
+                </h1>
+                <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">
+                    吉卜力自然風格 ｜ 寬版全向滑動 ｜ 敬老放大字體
+                </p>
+            </div>
+
+            <!-- 控制列：快捷 Hyperlink 按鈕 ＆ 圖文切換 -->
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <!-- 快捷超連結按鈕 (直達底部表單) -->
+                <div class="flex items-center gap-2">
+                    <a href="#section-add-date" class="bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm shadow-xs transition flex items-center gap-1 border border-amber-300">
+                        <span>🗓️</span> 擴充旅遊日期
+                    </a>
+                    <a href="#section-add-spot" class="bg-emerald-100 hover:bg-emerald-200 text-[#1E3E2E] font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm shadow-xs transition flex items-center gap-1 border border-emerald-300">
+                        <span>➕</span> 新增推薦景點
+                    </a>
+                </div>
+
+                <!-- 圖片為主 vs 文字為主 切換 -->
+                <div class="bg-[#1F4130] p-1 rounded-xl flex items-center border border-emerald-600/50 text-xs sm:text-sm">
+                    <button onclick="setDisplayMode('photo')" id="mode-photo-btn" class="px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition">
+                        🖼️ 圖片為主
+                    </button>
+                    <button onclick="setDisplayMode('text')" id="mode-text-btn" class="px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition">
+                        📝 文字為主
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-8 flex-1 w-full">
+
+        <!-- 1. 全向滑動排程看板區 (置頂第一優先呈現) -->
+        <section class="space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b-2 border-[#D7E5DC]">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-[#2D5A43] flex items-center gap-2">
+                        <span>🗂️</span> 旅遊行程看板 (寬版・上下左右自由滑動)
+                    </h2>
+                    <p class="text-xs sm:text-sm text-stone-500 mt-0.5">
+                        💡 提示：按住卡片可<strong>上下拖曳調序</strong>；長按或向右滑動即可瀏覽各日行程；目前為 <strong id="mode-text-indicator" class="text-amber-800">圖片為主</strong> 呈現。
+                    </p>
+                </div>
+                <div class="text-sm font-bold text-stone-700 bg-white px-3.5 py-1.5 rounded-xl border border-stone-300 shrink-0">
+                    生效行程：<span id="active-item-counter" class="text-amber-700 text-lg">0</span> 處
+                </div>
+            </div>
+
+            <!-- 橫向滾動容器 -->
+            <div id="lanes-container" class="horizontal-scroll-container">
+                <!-- 由 JavaScript 依日期動態產生日程欄位 -->
+            </div>
+        </section>
+
+        <!-- 2. 假刪除封存回收桶 -->
+        <section class="ghibli-card p-5 border-dashed border-2 border-stone-300">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base sm:text-lg font-bold text-stone-700 flex items-center gap-2">
+                    <span>📦</span> 暫時封存之行程項目 (<span id="trash-count" class="text-amber-700 font-bold">0</span>)
+                </h3>
+                <span class="text-xs sm:text-sm text-stone-500">假刪除不排入行車路線，可隨時點擊「復原」重新加入</span>
+            </div>
+            <div id="trash-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+        </section>
+
+        <!-- 3. 【置底區塊】新增管理功能區 (擴充日期 ＆ 新增景點表單) -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t-2 border-[#D7E5DC]">
+
+            <!-- (A) 擴充旅遊日期 -->
+            <div id="section-add-date" class="ghibli-card p-5 bg-[#FAF6EC] border-[#DDD4C0] flex flex-col justify-between scroll-mt-24">
+                <div>
+                    <h3 class="text-lg font-bold text-[#2D5A43] flex items-center gap-2 mb-2">
+                        <span>🗓️</span> 擴充旅遊日期
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        欲延長旅程或規劃新天數？選擇新日期後即可在下方生成該日的專屬排程欄位。
+                    </p>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">選擇新增日期：</label>
+                            <input type="date" id="new-day-date" value="2026-11-12" class="w-full border-2 border-stone-300 rounded-xl p-2.5 bg-white text-base font-bold text-stone-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">天數名稱 / 主題備註：</label>
+                            <input type="text" id="new-day-title" placeholder="例如：11/12 南迴海線回味之旅" class="w-full border-2 border-stone-300 rounded-xl p-2.5 bg-white text-sm text-stone-800">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-2">
+                    <button onclick="addNewTravelDate()" class="w-full ghibli-btn py-2.5 px-4 rounded-xl font-bold text-base shadow-sm">
+                        ＋ 建立新日程泳道
+                    </button>
+                </div>
+            </div>
+
+            <!-- (B) 新增推薦景點表單 (乾淨純文字輸入版本) -->
+            <div id="section-add-spot" class="lg:col-span-2 ghibli-card p-5 bg-[#FCFAF2] scroll-mt-24">
+                <h3 class="text-lg font-bold text-[#2D5A43] flex items-center gap-2 mb-2">
+                    <span>➕</span> 新增推薦景點 (自動加入日程排序中)
+                </h3>
+                <p class="text-sm text-gray-600 mb-3">
+                    填寫完成後將直接插入指定日期的排程看板，並支援卡片上下拖曳、自訂意願、景點介紹與 Google 地圖導航。
+                </p>
+
+                <form id="add-spot-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <!-- 欄位 1：預計前往日期 -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            (1) 預計前往日期 (Calendar 工具) *
+                        </label>
+                        <select id="form-date" class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white font-bold text-base text-stone-800">
+                            <!-- 動態填入選項 -->
+                        </select>
+                    </div>
+
+                    <!-- 欄位 2：預計前往時間 (24小時制) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            (2) 預計前往時間 (24小時制) *
+                        </label>
+                        <input type="time" id="form-time" value="14:00" required class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white font-bold text-base text-stone-800">
+                    </div>
+
+                    <!-- 欄位 3：推薦景點 -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            (3) 推薦景點名稱 *
+                        </label>
+                        <input type="text" id="form-name" placeholder="例如：多良觀光車站" required class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800">
+                    </div>
+
+                    <!-- 欄位 4：景點介紹 URL -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            (4) 景點介紹 URL (官方或觀光介紹網址)
+                        </label>
+                        <input type="url" id="form-intro-url" placeholder="例如：https://tour.taitung.gov.tw/..." class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800">
+                    </div>
+
+                    <!-- 欄位 5：地址URL (Google Map) -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            (5) 景點地址 / 地點名稱 (Google 地圖導航) *
+                        </label>
+                        <input type="text" id="form-address" placeholder="例如：台東縣太麻里鄉瀧溪路8-1號" required class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800">
+                    </div>
+
+                    <!-- 景點照片網址 -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            景點代表照片網址 (選填，留空將使用吉卜力自然風景預設圖)：
+                        </label>
+                        <input type="url" id="form-img" placeholder="https://..." class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800 text-xs">
+                    </div>
+
+                    <!-- 欄位 6：景點說明 -->
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">
+                            (6) 景點說明 / 推薦特色 (50字左右) *
+                        </label>
+                        <textarea id="form-desc" rows="2" placeholder="請填寫約50字的景點特色、美食或推薦活動摘要..." required class="w-full border-2 border-stone-300 rounded-xl p-2.5 bg-white text-stone-800 text-sm leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="sm:col-span-2 pt-1">
+                        <button type="submit" class="w-full ghibli-btn py-3 px-4 rounded-xl font-bold text-base shadow-md">
+                            確認新增至行程看板 (同步更新資料庫欄位)
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 頁尾 -->
+    <footer class="bg-[#2D5A43] text-emerald-100 text-center py-6 text-sm mt-8 border-t-4 border-[#3D7055]">
+        2026 臺東深度舒活之旅 ｜ 頂部快捷跳轉 × 全向滑動寬版看板
+    </footer>
+
+    <!-- JavaScript 核心邏輯 -->
+    <script>
+        let currentDisplayMode = 'photo';
+
+        // 預設日期清單
+        let travelDates = [
+            { date: "2026-11-08", title: "11/8 (日) 市區與啟程" },
+            { date: "2026-11-09", title: "11/9 (一) 海線專車行程" },
+            { date: "2026-11-10", title: "11/10 (二) 山線縱谷行程" },
+            { date: "2026-11-11", title: "11/11 (三) 池上漫遊與返程" }
+        ];
+
+        let scheduleItems = [
+            // 11/8
+            {
+                id: "ITEM-01",
+                date: "2026-11-08",
+                time: "07:05",
+                name: "🚄 去程火車：台鐵自強號3000 (車次 408)",
+                img: "https://images.unsplash.com/photo-1532105956626-9569c03602f6?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.railway.gov.tw/",
+                desc: "07:05【板橋】出發 ➔ 11:10 抵達【台東】火車站。抵達後轉乘接駁或計程車前往市區康橋商旅放行李。",
+                address: "台東火車站",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東火車站",
+                status: "confirm",
+                isDeleted: false,
+                isTransport: true
+            },
+            {
+                id: "ITEM-02",
+                date: "2026-11-08",
+                time: "11:30",
+                name: "🏨 入住：康橋商旅台東館 (連住兩晚)",
+                img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.kindness-hotel.com.tw/",
+                desc: "台東市中心核心住宿，附設豐富宵夜與美味早餐，鄰近正氣路商圈與鐵花村，地理位置極佳。",
+                address: "台東縣台東市中興路一段209巷16號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
+                status: "confirm",
+                isDeleted: false,
+                isHotel: true
+            },
+            {
+                id: "ITEM-03",
+                date: "2026-11-08",
+                time: "14:00",
+                name: "台東森林公園 (琵琶湖)",
+                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/445",
+                desc: "廣闊黑森林環抱琵琶湖與活水湖，林蔭步道如畫，騎單車穿梭湖光樹影間極致舒壓清幽。",
+                address: "台東縣台東市華泰路300號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東森林公園琵琶湖",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-04",
+                date: "2026-11-08",
+                time: "16:30",
+                name: "台東海濱公園 (向陽樹國際地標)",
+                img: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/444",
+                desc: "矗立太平洋畔的向陽樹國際地標，藤編藝術框出無垠蔚藍，遠眺綠島迎晨光絕美打卡處。",
+                address: "台東縣台東市大同路",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東海濱公園國際地標",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-05",
+                date: "2026-11-08",
+                time: "18:00",
+                name: "寶桑路老街與正氣路夜市",
+                img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/450",
+                desc: "台東市區經典在地老滋味，正氣路米苔目、香酥臭豆腐香氣四溢，感受老街純樸煙火氣息。",
+                address: "台東縣台東市正氣路",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東正氣路觀光夜市",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-06",
+                date: "2026-11-08",
+                time: "20:00",
+                name: "鐵花村音樂聚落",
+                img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/448",
+                desc: "昔日舊台鐵宿舍轉型的藝文音樂聚落，夜幕低垂彩繪熱氣球燈海如繁星，市集漫遊文青首選。",
+                address: "台東縣台東市新生路135巷26號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=鐵花村音樂聚落",
+                status: "confirm",
+                isDeleted: false
+            },
+
+            // 11/9
+            {
+                id: "ITEM-07",
+                date: "2026-11-09",
+                time: "09:00",
+                name: "🚐 11/9 海線專屬包車 (8小時專車服務)",
+                img: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/",
+                desc: "09:00 康橋商旅出發 ➔ 17:30 結束返回康橋。司機定點接送，免找車位、長輩最省力。",
+                address: "台東縣台東市中興路一段209巷16號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
+                status: "confirm",
+                isDeleted: false,
+                isTransport: true
+            },
+            {
+                id: "ITEM-08",
+                date: "2026-11-09",
+                time: "09:30",
+                name: "太麻里華源觀景台",
+                img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/1344",
+                desc: "俯瞰南迴絕美弧形海灣，蓄水池映出太平洋水天一色，被譽為台東最迷人無死角天空之鏡。",
+                address: "台東縣太麻里鄉華源村",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=太麻里華源觀景台",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-09",
+                date: "2026-11-09",
+                time: "10:30",
+                name: "太麻里福興宮 (招財貓土地公廟)",
+                img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/1410",
+                desc: "全台獨創巨型金黃招財貓坐鎮，融入土地公傳統信仰，成為台東沿海祈福招財療癒新亮點。",
+                address: "台東縣太麻里鄉福興村",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=太麻里福興宮招財貓",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-10",
+                date: "2026-11-09",
+                time: "11:30",
+                name: "富岡小野柳 ＆ 加路蘭遊憩區",
+                img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/32",
+                desc: "豆腐岩與蕈狀岩地貌崢嶸，加路蘭漂流木裝置藝術與遼闊海天相映，吹風漫步好舒心。",
+                address: "台東縣台東市松江路一段500號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=富岡地質公園小野柳",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-11",
+                date: "2026-11-09",
+                time: "12:30",
+                name: "成功漁港 (午餐自理品嚐海鮮)",
+                img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/50",
+                desc: "臺東最新鮮的漁獲集散地，品嚐當季鮮甜生魚片與現煮海鮮湯，大啖太平洋純粹美味。",
+                address: "台東縣成功鎮港邊路19號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=成功漁港",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-12",
+                date: "2026-11-09",
+                time: "14:00",
+                name: "三仙台風景區 (跨海八拱橋)",
+                img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/53",
+                desc: "八拱跨海大橋飛躍湛藍太平洋，串連離岸珊瑚礁火山島，迎晨曦仙氣繚繞，東海岸永恆地標。",
+                address: "台東縣成功鎮基翬路74號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=三仙台風景區",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-13",
+                date: "2026-11-09",
+                time: "15:30",
+                name: "巴歌浪船屋 (原民Live吉他下午茶)",
+                img: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/225",
+                desc: "太平洋浪濤聲中的原民藝術木雕方舟，伴隨在地創作歌手吉他彈唱與下午茶，極致愜意放鬆。",
+                address: "台東縣長濱鄉三間村大俱來1-7號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=巴歌浪船屋藝術園區",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-14",
+                date: "2026-11-09",
+                time: "16:45",
+                name: "金樽咖啡 ＆ 陸連島眺望",
+                img: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/47",
+                desc: "座落於金樽遊憩區高處，俯瞰全台唯一正在生長陸連島與衝浪金浪，伴隨咖啡香眺望海天一色。",
+                address: "台東縣東河鄉七里橋11號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=金樽咖啡",
+                status: "confirm",
+                isDeleted: false
+            },
+
+            // 11/10
+            {
+                id: "ITEM-15",
+                date: "2026-11-10",
+                time: "09:00",
+                name: "🚐 11/10 山線專屬包車 (退房・行李全上車)",
+                img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/",
+                desc: "09:00 康橋退房行李全數上包車 ➔ 縱谷線 ➔ 17:15 抵達池上換鵝山房民宿大門口！",
+                address: "台東縣台東市中興路一段209巷16號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
+                status: "confirm",
+                isDeleted: false,
+                isTransport: true
+            },
+            {
+                id: "ITEM-16",
+                date: "2026-11-10",
+                time: "10:00",
+                name: "初鹿牧場",
+                img: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.chuluranch.com.tw/",
+                desc: "全台最大坡地牧場，青翠草原綿延起伏，品嚐濃純香現擠鮮奶與乳酪，親近牛羊自然野趣。",
+                address: "台東縣卑南鄉明峰村牧場1號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=初鹿牧場",
+                status: "consider",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-17",
+                date: "2026-11-10",
+                time: "11:30",
+                name: "台東原生應用植物園 (藥草火鍋午餐)",
+                img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://yuan-sen.com.tw/",
+                desc: "中央山脈山腳下的藥用植物王國，品嚐養生氽燙藥草火鍋，遠眺縱谷綠意，身心舒暢開闊。",
+                address: "台東縣卑南鄉明峰村試驗場8號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東原生應用植物園",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-18",
+                date: "2026-11-10",
+                time: "13:00",
+                name: "美濃冰品 (半山腰手作冰品)",
+                img: "https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/shop/details/809",
+                desc: "隱身山腰竹林裡的在地手作冰品，採用在地釋迦、洛神與紅烏龍入味，綿密沁涼天然無負擔。",
+                address: "台東縣卑南鄉美濃村高台2號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=美濃冰品",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-19",
+                date: "2026-11-10",
+                time: "13:30",
+                name: "布農部落休閒農場 (八部合音與射箭)",
+                img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.bunun.org.tw/",
+                desc: "沉浸布農原鄉文化，震撼聆聽祈禱小米豐收八部合音，親手體驗傳統射箭與部落手作溫暖。",
+                address: "台東縣延平鄉昇平路191號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=布農部落休閒農場",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-20",
+                date: "2026-11-10",
+                time: "15:30",
+                name: "鹿野在地茶莊 (龍田綠色隧道)",
+                img: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/465",
+                desc: "穿梭龍田綠色隧道，漫遊茶園換穿採茶裝，席地品茗甘醇蜜香紅烏龍，體驗慢活縱谷生活。",
+                address: "台東縣鹿野鄉龍田村",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=龍田綠色隧道",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-21",
+                date: "2026-11-10",
+                time: "17:15",
+                name: "🏡 入住：池上換鵝山房民宿",
+                img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.facebook.com/goosebnb/",
+                desc: "17:15 包車直達大門口！池上充滿書法墨香的典雅民宿，主人字畫親和，步行即可漫遊老街與水圳。",
+                address: "台東縣池上鄉中山路251號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東縣池上鄉中山路251號+換鵝山房",
+                status: "confirm",
+                isDeleted: false,
+                isHotel: true
+            },
+            {
+                id: "ITEM-22",
+                date: "2026-11-10",
+                time: "18:00",
+                name: "池上伯朗大道 ＆ 大坡池",
+                img: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.erv-nsa.gov.tw/zh-tw/attractions/detail/68",
+                desc: "廣袤縱谷無垠金黃稻浪，筆直天堂路沒有一支電線桿，金城武樹下騎行享受微風田園詩篇。",
+                address: "台東縣池上鄉伯朗大道",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=池上伯朗大道",
+                status: "confirm",
+                isDeleted: false
+            },
+
+            // 11/11
+            {
+                id: "ITEM-23",
+                date: "2026-11-11",
+                time: "14:28",
+                name: "🚄 返程火車：台鐵自強號3000 (車次 477)",
+                img: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.railway.gov.tw/",
+                desc: "14:28【池上】出發 ➔ 19:12 抵達【桃園】火車站。請提前20分鐘抵達池上火車站候車。",
+                address: "池上火車站",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=池上火車站",
+                status: "confirm",
+                isDeleted: false,
+                isTransport: true
+            }
+        ];
+
+        function setDisplayMode(mode) {
+            currentDisplayMode = mode;
+            const photoBtn = document.getElementById('mode-photo-btn');
+            const textBtn = document.getElementById('mode-text-btn');
+            const indicator = document.getElementById('mode-text-indicator');
+
+            if (mode === 'photo') {
+                photoBtn.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition";
+                textBtn.className = "px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition";
+                indicator.innerText = "圖片為主 (含照片展示)";
+            } else {
+                textBtn.className = "px-2.5 py-1 rounded-lg font-bold bg-white text-[#2D5A43] shadow-xs transition";
+                photoBtn.className = "px-2.5 py-1 rounded-lg font-bold text-emerald-100 hover:text-white transition";
+                indicator.innerText = "文字為主 (簡潔易讀)";
+            }
+
+            renderLanes();
+        }
+
+        // 單重括號日期選單
+        function updateDateSelectOptions() {
+            const select = document.getElementById('form-date');
+            select.innerHTML = '';
+            travelDates.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.date;
+
+                const weekdayMatch = d.title.match(/\(([^)]+)\)/);
+                const weekdayText = weekdayMatch ? weekdayMatch[1] : '';
+
+                opt.textContent = weekdayText ? `${d.date} (${weekdayText})` : d.date;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderLanes() {
+            const container = document.getElementById('lanes-container');
+            const trashContainer = document.getElementById('trash-container');
+            container.innerHTML = '';
+            trashContainer.innerHTML = '';
+
+            let totalActive = 0;
+            let trashCount = 0;
+            let dayItemCounts = {};
+            travelDates.forEach(d => dayItemCounts[d.date] = 0);
+
+            travelDates.forEach(day => {
+                const lane = document.createElement('div');
+                lane.className = 'lane-column bg-[#FAF6EE] border-2 border-[#E3D9C6] rounded-2xl p-4 flex flex-col shadow-xs';
+                lane.innerHTML = `
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b-2 border-[#D7C9AF]">
+                        <div>
+                            <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">${day.date}</span>
+                            <h3 class="text-lg font-extrabold text-[#3B2F1D] mt-1">${day.title}</h3>
+                        </div>
+                        <span id="badge-count-${day.date}" class="text-xs font-bold bg-[#E8DCBF] text-[#4E3D24] px-2.5 py-1 rounded-full">0 項</span>
+                    </div>
+                    <div id="lane-items-${day.date}" class="space-y-4 flex-1 min-h-[160px]" data-date="${day.date}">
+                    </div>
+                `;
+                container.appendChild(lane);
+            });
+
+            scheduleItems.forEach(item => {
+                if (item.isDeleted) {
+                    trashCount++;
+                    const trashCard = document.createElement('div');
+                    trashCard.className = 'bg-stone-100 border border-stone-300 rounded-xl p-3 flex justify-between items-center opacity-80';
+                    trashCard.innerHTML = `
+                        <div class="truncate mr-2">
+                            <span class="font-bold text-stone-600 line-through text-base">${item.name}</span>
+                            <span class="text-xs text-stone-400 block">${item.date} ｜ ${item.time}</span>
+                        </div>
+                        <button onclick="restoreItem('${item.id}')" class="bg-[#2D5A43] hover:bg-[#204030] text-white px-3 py-1.5 rounded-lg text-sm font-bold shrink-0">
+                            復原
+                        </button>
+                    `;
+                    trashContainer.appendChild(trashCard);
+                    return;
+                }
+
+                totalActive++;
+                if (dayItemCounts[item.date] !== undefined) dayItemCounts[item.date]++;
+
+                const targetLane = document.getElementById(`lane-items-${item.date}`);
+                if (!targetLane) return;
+
+                const card = document.createElement('div');
+                card.className = 'card-draggable ghibli-card overflow-hidden transition-all';
+                card.draggable = true;
+                card.dataset.id = item.id;
+
+                let badge = '<span class="bg-[#4E7C59] text-white text-xs px-2.5 py-0.5 rounded-full font-bold">🌲 景點名勝</span>';
+                if (item.isHotel) badge = '<span class="bg-amber-700 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">🏨 住宿據點</span>';
+                if (item.isTransport) badge = '<span class="bg-emerald-800 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">🚗 交通動態</span>';
+
+                let photoSection = '';
+                if (currentDisplayMode === 'photo' && item.img) {
+                    photoSection = `
+                        <div class="relative h-44 w-full overflow-hidden">
+                            <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20"></div>
+                            <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                                <span class="bg-black/70 text-white font-mono font-bold text-xs px-2.5 py-0.5 rounded">${item.time}</span>
+                                ${badge}
+                            </div>
+                            <button onclick="softDeleteItem('${item.id}')" title="假刪除 (移入封存桶)" class="absolute top-2.5 right-2.5 bg-white/80 hover:bg-white text-stone-700 p-1.5 rounded-full text-xs shadow-md transition">
+                                🗑️
+                            </button>
+                            <div class="absolute bottom-2.5 left-3 right-3 text-white">
+                                <h4 class="font-extrabold text-lg leading-tight drop-shadow-md">${item.name}</h4>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    photoSection = `
+                        <div class="p-3 bg-stone-100 border-b border-stone-200 flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-stone-800 text-white font-mono font-bold text-xs px-2 py-0.5 rounded">${item.time}</span>
+                                ${badge}
+                            </div>
+                            <button onclick="softDeleteItem('${item.id}')" title="假刪除" class="text-stone-400 hover:text-rose-600 p-1 text-sm">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                }
+
+                let introBtnHtml = '';
+                if (item.introUrl) {
+                    introBtnHtml = `
+                        <a href="${item.introUrl}" target="_blank" class="inline-flex items-center gap-1 bg-[#4E7C59] hover:bg-[#3E6547] text-white text-xs font-bold px-2.5 py-1.5 rounded-lg shadow-xs transition">
+                            <span>🌐</span> 景點介紹
+                        </a>
+                    `;
+                }
+
+                card.innerHTML = `
+                    ${photoSection}
+                    <div class="p-4 flex flex-col justify-between">
+                        ${currentDisplayMode === 'text' ? `<h4 class="font-extrabold text-lg text-stone-900 mb-1">${item.name}</h4>` : ''}
+
+                        <p class="text-sm sm:text-base text-stone-700 leading-relaxed bg-white/70 p-3 rounded-xl border border-stone-200/60">
+                            ${item.desc}
+                        </p>
+
+                        <div class="mt-2 text-xs text-stone-500 truncate">
+                            📍 <strong>地點：</strong>${item.address}
+                        </div>
+
+                        <div class="mt-3 pt-3 border-t border-stone-200/80 flex flex-wrap justify-between items-center gap-2">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <a href="${item.mapUrl}" target="_blank" class="inline-flex items-center gap-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg shadow-xs transition">
+                                    <span>🗺️</span> Google 導航
+                                </a>
+                                ${introBtnHtml}
+                            </div>
+                            <select onchange="updateItemStatus('${item.id}', this.value)" class="text-xs font-bold border-2 border-stone-300 rounded-lg p-1 bg-white text-stone-800">
+                                <option value="confirm" ${item.status === 'confirm' ? 'selected' : ''}>✅ 確認前往</option>
+                                <option value="consider" ${item.status === 'consider' ? 'selected' : ''}>🤔 考慮前往</option>
+                                <option value="cancel" ${item.status === 'cancel' ? 'selected' : ''}>❌ 取消前往</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+                targetLane.appendChild(card);
+            });
+
+            document.getElementById('active-item-counter').innerText = totalActive;
+            document.getElementById('trash-count').innerText = trashCount;
+            travelDates.forEach(d => {
+                const countBadge = document.getElementById(`badge-count-${d.date}`);
+                if (countBadge) countBadge.innerText = `${dayItemCounts[d.date] || 0} 項`;
+            });
+
+            if (trashCount === 0) {
+                trashContainer.innerHTML = '<div class="col-span-3 text-sm text-stone-400 italic py-2">目前沒有被封存的行程。</div>';
+            }
+
+            setupDropZones();
+        }
+
+        let draggedItemId = null;
+
+        function handleDragStart(e) {
+            draggedItemId = this.dataset.id;
+            this.classList.add('card-dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('card-dragging');
+            document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }
+
+        function setupDropZones() {
+            travelDates.forEach(d => {
+                const lane = document.getElementById(`lane-items-${d.date}`);
+                if (!lane) return;
+
+                lane.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    const targetCard = e.target.closest('.card-draggable');
+                    if (targetCard && targetCard.dataset.id !== draggedItemId) {
+                        targetCard.classList.add('drag-over');
+                    }
+                });
+
+                lane.addEventListener('dragleave', function(e) {
+                    const targetCard = e.target.closest('.card-draggable');
+                    if (targetCard) targetCard.classList.remove('drag-over');
+                });
+
+                lane.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+                    if (!draggedItemId) return;
+
+                    const targetDate = this.dataset.date;
+                    const fromIdx = scheduleItems.findIndex(x => x.id === draggedItemId);
+                    if (fromIdx === -1) return;
+
+                    const draggedItem = scheduleItems[fromIdx];
+                    draggedItem.date = targetDate;
+
+                    const targetCard = e.target.closest('.card-draggable');
+                    if (targetCard) {
+                        const toIdx = scheduleItems.findIndex(x => x.id === targetCard.dataset.id);
+                        scheduleItems.splice(fromIdx, 1);
+                        scheduleItems.splice(toIdx, 0, draggedItem);
+                    } else {
+                        scheduleItems.splice(fromIdx, 1);
+                        scheduleItems.push(draggedItem);
+                    }
+
+                    renderLanes();
+                });
+            });
+        }
+
+        function addNewTravelDate() {
+            const dateVal = document.getElementById('new-day-date').value;
+            const titleVal = document.getElementById('new-day-title').value.trim() || `${dateVal} 自訂行程`;
+
+            if (!dateVal) {
+                alert('請先選擇欲新增的日期！');
+                return;
+            }
+
+            if (travelDates.some(d => d.date === dateVal)) {
+                alert('該日期已存在於行程看板中！');
+                return;
+            }
+
+            travelDates.push({ date: dateVal, title: titleVal });
+            travelDates.sort((a, b) => a.date.localeCompare(b.date));
+
+            updateDateSelectOptions();
+            renderLanes();
+            alert(`已成功建立 ${dateVal} 的專屬日程泳道！可向右滑動查看。`);
+        }
+
+        document.getElementById('add-spot-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('form-date').value;
+            const time = document.getElementById('form-time').value;
+            const name = document.getElementById('form-name').value.trim();
+            const introUrl = document.getElementById('form-intro-url').value.trim();
+            const desc = document.getElementById('form-desc').value.trim();
+            const address = document.getElementById('form-address').value.trim();
+            let img = document.getElementById('form-img').value.trim();
+            if (!img) {
+                img = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80";
+            }
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+            const newItem = {
+                id: "CUSTOM-" + Date.now(),
+                date: date,
+                time: time,
+                name: name,
+                img: img,
+                introUrl: introUrl,
+                desc: desc,
+                address: address,
+                mapUrl: mapUrl,
+                status: "confirm",
+                isDeleted: false
+            };
+
+            scheduleItems.push(newItem);
+            renderLanes();
+            document.getElementById('add-spot-form').reset();
+            alert(`景點【${name}】已成功加入 ${date} 的行程看板中！`);
+        });
+
+        function softDeleteItem(id) {
+            const item = scheduleItems.find(x => x.id === id);
+            if (item) {
+                item.isDeleted = true;
+                item.status = 'cancel';
+                renderLanes();
+            }
+        }
+
+        function restoreItem(id) {
+            const item = scheduleItems.find(x => x.id === id);
+            if (item) {
+                item.isDeleted = false;
+                item.status = 'confirm';
+                renderLanes();
+            }
+        }
+
+        function updateItemStatus(id, newStatus) {
+            const item = scheduleItems.find(x => x.id === id);
+            if (item) {
+                item.status = newStatus;
+                renderLanes();
+            }
+        }
+
+        updateDateSelectOptions();
+        renderLanes();
+    </script>
+</body>
+</html>
