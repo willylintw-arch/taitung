@@ -7,6 +7,11 @@
     <link rel="icon" href="data:,">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- 行動裝置觸控拖曳支援 (Touch Drag Polyfill) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mobile-drag-drop@3.0.0-rc.0/default.css">
+<script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@3.0.0-rc.0/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mobile-drag-drop@3.0.0-rc.0/scroll-behaviour.min.js"></script>
+
     <style>
         :root {
             --ghibli-forest: #2D5A43;
@@ -85,6 +90,9 @@
         .card-draggable {
             cursor: grab;
             user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+
             transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
         }
         .card-draggable:active { cursor: grabbing; }
@@ -942,6 +950,9 @@
                 item.isDeleted = false;
                 item.status = 'confirm';
                 renderLanes();
+       
+        }
+
 
                 // 同步將 Google Sheets 資料狀態改回正常
                 fetch(GAS_URL, {
@@ -994,8 +1005,16 @@
             }
         }
 
-        updateDateSelectOptions();
+                updateDateSelectOptions();
         renderLanes();
+
+        // 啟動行動端長按觸控拖曳 (長按 200 毫秒啟動)
+        if (window.MobileDragDrop) {
+            MobileDragDrop.polyfill({
+                dragImageTranslateOverride: MobileDragDrop.scrollBehaviourDragImageTranslateOverride,
+                holdToDrag: 200
+            });
+        }
     </script>
 </body>
 </html>
