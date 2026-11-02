@@ -19,7 +19,7 @@
         body {
             background-color: var(--ghibli-sand);
             color: var(--ghibli-text);
-            font-size: 17px; /* 適合60歲長輩閱讀之清晰大字 */
+            font-size: 17px; /* 適合長輩閱讀清晰大字 */
             line-height: 1.6;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Noto Sans TC", sans-serif;
             overflow-x: hidden;
@@ -72,6 +72,12 @@
         .lane-column {
             flex: 0 0 360px; /* 固定大寬度，確保卡片大氣不擠壓 */
             scroll-snap-align: start;
+            transition: all 0.3s ease;
+        }
+
+        .lane-column-collapsed {
+            flex: 0 0 220px !important; /* 隱藏收合時寬度變窄，節省橫向空間 */
+            opacity: 0.85;
         }
 
         /* 拖曳互動效果 */
@@ -93,7 +99,7 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- 頂部標題與快捷導覽列 (已移除 API Key 按鈕) -->
+    <!-- 頂部標題與快捷導覽列 -->
     <header class="ghibli-header text-white sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-3">
             <div>
@@ -101,13 +107,12 @@
                     <span>🍃</span> 2026 臺東舒活之旅・行程戰情室
                 </h1>
                 <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">
-                    吉卜力自然風格 ｜ 寬版全向滑動 ｜ 敬老放大字體
+                    每日行程支援一鍵隱藏與開啟 ｜ 寬版全向滑動 ｜ 敬老放大字體
                 </p>
             </div>
 
             <!-- 控制列：快捷 Hyperlink 按鈕 ＆ 圖文切換 -->
             <div class="flex items-center gap-2.5 flex-wrap">
-                <!-- 快捷超連結按鈕 (直達底部表單) -->
                 <div class="flex items-center gap-2">
                     <a href="#section-add-date" class="bg-amber-100 hover:bg-amber-200 text-amber-950 font-bold px-3 py-1.5 rounded-xl text-xs sm:text-sm shadow-xs transition flex items-center gap-1 border border-amber-300">
                         <span>🗓️</span> 擴充旅遊日期
@@ -132,15 +137,15 @@
 
     <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-8 flex-1 w-full">
 
-        <!-- 1. 全向滑動排程看板區 (置頂第一優先呈現) -->
+        <!-- 1. 全向滑動排程看板區 -->
         <section class="space-y-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b-2 border-[#D7E5DC]">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-extrabold text-[#2D5A43] flex items-center gap-2">
-                        <span>🗂️</span> 旅遊行程看板 (寬版・上下左右自由滑動)
+                        <span>🗂️</span> 旅遊行程看板 (已走完的天數可按「隱藏」收合)
                     </h2>
                     <p class="text-xs sm:text-sm text-stone-500 mt-0.5">
-                        💡 提示：按住卡片可<strong>上下拖曳調序</strong>；長按或向右滑動即可瀏覽各日行程；目前為 <strong id="mode-text-indicator" class="text-amber-800">圖片為主</strong> 呈現。
+                        💡 提示：點擊各天右上角「🙈 隱藏」可將已走完的日程收合；隨時按「👁️ 展開」即可重新查看。
                     </p>
                 </div>
                 <div class="text-sm font-bold text-stone-700 bg-white px-3.5 py-1.5 rounded-xl border border-stone-300 shrink-0">
@@ -165,7 +170,7 @@
             <div id="trash-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
         </section>
 
-        <!-- 3. 【置底區塊】新增管理功能區 (擴充日期 ＆ 新增景點表單) -->
+        <!-- 3. 【置底區塊】新增管理功能區 -->
         <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t-2 border-[#D7E5DC]">
 
             <!-- (A) 擴充旅遊日期 -->
@@ -175,7 +180,7 @@
                         <span>🗓️</span> 擴充旅遊日期
                     </h3>
                     <p class="text-sm text-gray-600 mb-4">
-                        欲延長旅程或規劃新天數？選擇新日期後即可在下方生成該日的專屬排程欄位。
+                        欲延長旅程或規劃新天數？選擇新日期後即可在上方生成該日的專屬排程欄位。
                     </p>
                     <div class="space-y-3">
                         <div>
@@ -195,27 +200,24 @@
                 </div>
             </div>
 
-            <!-- (B) 新增推薦景點表單 (乾淨純文字輸入版本) -->
+            <!-- (B) 新增推薦景點表單 -->
             <div id="section-add-spot" class="lg:col-span-2 ghibli-card p-5 bg-[#FCFAF2] scroll-mt-24">
                 <h3 class="text-lg font-bold text-[#2D5A43] flex items-center gap-2 mb-2">
-                    <span>➕</span> 新增推薦景點 (自動加入日程排序中)
+                    <span>➕</span> 新增推薦景點 (自動同步至 Google 試算表)
                 </h3>
                 <p class="text-sm text-gray-600 mb-3">
-                    填寫完成後將直接插入指定日期的排程看板，並支援卡片上下拖曳、自訂意願、景點介紹與 Google 地圖導航。
+                    填寫完成後將直接插入指定日期的排程看板，並透過後端 API 同步寫入雲端資料庫。
                 </p>
 
                 <form id="add-spot-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                    <!-- 欄位 1：預計前往日期 -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">
                             (1) 預計前往日期 (Calendar 工具) *
                         </label>
                         <select id="form-date" class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white font-bold text-base text-stone-800">
-                            <!-- 動態填入選項 -->
                         </select>
                     </div>
 
-                    <!-- 欄位 2：預計前往時間 (24小時制) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">
                             (2) 預計前往時間 (24小時制) *
@@ -223,7 +225,6 @@
                         <input type="time" id="form-time" value="14:00" required class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white font-bold text-base text-stone-800">
                     </div>
 
-                    <!-- 欄位 3：推薦景點 -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">
                             (3) 推薦景點名稱 *
@@ -231,7 +232,6 @@
                         <input type="text" id="form-name" placeholder="例如：多良觀光車站" required class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800">
                     </div>
 
-                    <!-- 欄位 4：景點介紹 URL -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">
                             (4) 景點介紹 URL (官方或觀光介紹網址)
@@ -239,7 +239,6 @@
                         <input type="url" id="form-intro-url" placeholder="例如：https://tour.taitung.gov.tw/..." class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800">
                     </div>
 
-                    <!-- 欄位 5：地址URL (Google Map) -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">
                             (5) 景點地址 / 地點名稱 (Google 地圖導航) *
@@ -247,7 +246,6 @@
                         <input type="text" id="form-address" placeholder="例如：台東縣太麻里鄉瀧溪路8-1號" required class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800">
                     </div>
 
-                    <!-- 景點照片網址 -->
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">
                             景點代表照片網址 (選填，留空將使用吉卜力自然風景預設圖)：
@@ -255,10 +253,9 @@
                         <input type="url" id="form-img" placeholder="https://..." class="w-full border-2 border-stone-300 rounded-xl p-2 bg-white text-stone-800 text-xs">
                     </div>
 
-                    <!-- 欄位 6：景點說明 -->
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-bold text-gray-700 mb-1">
-                            (6) 景點說明 / 推薦特色 (50字左右) *
+                            (6) 景點說明 / 推薦特色 (約50字) *
                         </label>
                         <textarea id="form-desc" rows="2" placeholder="請填寫約50字的景點特色、美食或推薦活動摘要..." required class="w-full border-2 border-stone-300 rounded-xl p-2.5 bg-white text-stone-800 text-sm leading-relaxed"></textarea>
                     </div>
@@ -275,32 +272,37 @@
 
     </main>
 
-    <!-- 頁尾 -->
     <footer class="bg-[#2D5A43] text-emerald-100 text-center py-6 text-sm mt-8 border-t-4 border-[#3D7055]">
-        2026 臺東深度舒活之旅 ｜ 頂部快捷跳轉 × 全向滑動寬版看板
+        2026 臺東深度舒活之旅 ｜ 每日行程一鍵隱藏/開啟 × 全向滑動寬版看板
     </footer>
 
     <!-- JavaScript 核心邏輯 -->
     <script>
+        // 請確保此處填入您在 Google Apps Script 取得的 Web App 部署網址
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz_您的腳本ID/exec";
+
         let currentDisplayMode = 'photo';
 
-        // 預設日期清單
+        // 讀取本地儲存的各天收合狀態
+        let collapsedDays = JSON.parse(localStorage.getItem('taitung_collapsed_days') || "{}");
+
         let travelDates = [
             { date: "2026-11-08", title: "11/8 (日) 市區與啟程" },
-            { date: "2026-11-09", title: "11/9 (一) 海線專車行程" },
+            { date: "2026-11-09", title: "11/9 (一) 海線專屬行程" },
             { date: "2026-11-10", title: "11/10 (二) 山線縱谷行程" },
             { date: "2026-11-11", title: "11/11 (三) 池上漫遊與返程" }
         ];
 
+        // 包含更新後介紹網址的完整行程資料清單
         let scheduleItems = [
-            // 11/8
+            // ================= 11/8 (日) 市區與啟程 =================
             {
                 id: "ITEM-01",
                 date: "2026-11-08",
                 time: "07:05",
                 name: "🚄 去程火車：台鐵自強號3000 (車次 408)",
                 img: "https://images.unsplash.com/photo-1532105956626-9569c03602f6?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.railway.gov.tw/",
+                introUrl: "https://www.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime",
                 desc: "07:05【板橋】出發 ➔ 11:10 抵達【台東】火車站。抵達後轉乘接駁或計程車前往市區康橋商旅放行李。",
                 address: "台東火車站",
                 mapUrl: "https://www.google.com/maps/search/?api=1&query=台東火車站",
@@ -322,68 +324,16 @@
                 isDeleted: false,
                 isHotel: true
             },
+
+            // ================= 11/9 (一) 海線專屬行程 =================
             {
                 id: "ITEM-03",
-                date: "2026-11-08",
-                time: "14:00",
-                name: "台東森林公園 (琵琶湖)",
-                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/445",
-                desc: "廣闊黑森林環抱琵琶湖與活水湖，林蔭步道如畫，騎單車穿梭湖光樹影間極致舒壓清幽。",
-                address: "台東縣台東市華泰路300號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東森林公園琵琶湖",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-04",
-                date: "2026-11-08",
-                time: "16:30",
-                name: "台東海濱公園 (向陽樹國際地標)",
-                img: "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/444",
-                desc: "矗立太平洋畔的向陽樹國際地標，藤編藝術框出無垠蔚藍，遠眺綠島迎晨光絕美打卡處。",
-                address: "台東縣台東市大同路",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東海濱公園國際地標",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-05",
-                date: "2026-11-08",
-                time: "18:00",
-                name: "寶桑路老街與正氣路夜市",
-                img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/450",
-                desc: "台東市區經典在地老滋味，正氣路米苔目、香酥臭豆腐香氣四溢，感受老街純樸煙火氣息。",
-                address: "台東縣台東市正氣路",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=台東正氣路觀光夜市",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-06",
-                date: "2026-11-08",
-                time: "20:00",
-                name: "鐵花村音樂聚落",
-                img: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/448",
-                desc: "昔日舊台鐵宿舍轉型的藝文音樂聚落，夜幕低垂彩繪熱氣球燈海如繁星，市集漫遊文青首選。",
-                address: "台東縣台東市新生路135巷26號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=鐵花村音樂聚落",
-                status: "confirm",
-                isDeleted: false
-            },
-
-            // 11/9
-            {
-                id: "ITEM-07",
                 date: "2026-11-09",
                 time: "09:00",
-                name: "🚐 11/9 海線專屬包車 (8小時專車服務)",
+                name: "🚐 11/9 海線專屬包車 (09:00出發 ➔ 17:30返回康橋)",
                 img: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/",
-                desc: "09:00 康橋商旅出發 ➔ 17:30 結束返回康橋。司機定點接送，免找車位、長輩最省力。",
+                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/travel/check-in-taitung/",
+                desc: "09:00 台東康橋商旅準時發車 ➔ 海線特色景點 ➔ 17:00~17:30 返回康橋商旅。司機全程定點接送最省力。",
                 address: "台東縣台東市中興路一段209巷16號",
                 mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
                 status: "confirm",
@@ -391,22 +341,130 @@
                 isTransport: true
             },
             {
+                id: "ITEM-04",
+                date: "2026-11-09",
+                time: "09:20",
+                name: "富岡小野柳 ＆ 加路蘭遊憩區",
+                img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/301",
+                desc: "豆腐岩與蕈狀岩地貌崢嶸，加路蘭漂流木裝置藝術與遼闊海天相映，吹風漫步好舒心。",
+                address: "台東縣台東市松江路一段500號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=富岡地質公園小野柳",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-05",
+                date: "2026-11-09",
+                time: "10:20",
+                name: "富山護漁區 (杉原潮間帶)",
+                img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/282",
+                desc: "杉原海灣清澈淺灘，豐富潮間帶礁岩生態，踩踏海中步道近距離親近游魚，適合漫步放鬆的海岸秘境。",
+                address: "台東縣卑南鄉杉原20號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=富山漁業資源保育區",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-06",
+                date: "2026-11-09",
+                time: "11:15",
+                name: "水往上流奇觀",
+                img: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/319",
+                desc: "灌溉溝渠依地形傾斜產生的視覺奇景，潺潺流水看似緩緩逆向往高處攀流，趣味十足的著名地理打卡點。",
+                address: "台東縣東河鄉花東海岸公路台11線約148K處",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=水往上流",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-07",
+                date: "2026-11-09",
+                time: "11:50",
+                name: "東河包子 (在地元氣點心)",
+                img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/322",
+                desc: "台11線上馳名遐邇的排隊在地老店，麵皮鬆軟香甜，肉餡鮮美多汁香氣撲鼻，旅途中不可錯過的元氣點心。",
+                address: "台東縣東河鄉東河村南東河420號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=東河包子",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
                 id: "ITEM-08",
                 date: "2026-11-09",
-                time: "09:30",
-                name: "太麻里華源觀景台",
-                img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/1344",
-                desc: "俯瞰南迴絕美弧形海灣，蓄水池映出太平洋水天一色，被譽為台東最迷人無死角天空之鏡。",
-                address: "台東縣太麻里鄉華源村",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=太麻里華源觀景台",
+                time: "12:30",
+                name: "成功漁港 (約12:30 午餐自理)",
+                img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/337",
+                desc: "臺東最新鮮的漁獲集散地，品嚐當季鮮甜生魚片與現煮海鮮湯，大啖太平洋純粹美味。",
+                address: "台東縣成功鎮港邊路19號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=成功漁港",
                 status: "confirm",
                 isDeleted: false
             },
             {
                 id: "ITEM-09",
                 date: "2026-11-09",
-                time: "10:30",
+                time: "14:00",
+                name: "三仙台風景區 (跨海八拱步橋)",
+                img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/333",
+                desc: "八拱跨海大橋飛躍湛藍太平洋，串連離岸珊瑚礁火山島，迎晨曦仙氣繚繞，東海岸永恆地標。",
+                address: "台東縣成功鎮基翬路74號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=三仙台風景區",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-10",
+                date: "2026-11-09",
+                time: "15:45",
+                name: "金樽咖啡 ＆ 陸連島眺望",
+                img: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/322",
+                desc: "座落於金樽遊憩區高處，俯瞰全台唯一正在生長陸連島與衝浪金浪，伴隨咖啡香眺望海天一色。",
+                address: "台東縣東河鄉七里橋11號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=金樽咖啡",
+                status: "confirm",
+                isDeleted: false
+            },
+            {
+                id: "ITEM-11",
+                date: "2026-11-09",
+                time: "17:15",
+                name: "🏨 返回：康橋商旅台東館 (享用宵夜休息)",
+                img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://www.kindness-hotel.com.tw/",
+                desc: "17:00~17:30 包車專車送回康橋商旅台東館。休息放鬆、享用飯店貼心宵夜點心。",
+                address: "台東縣台東市中興路一段209巷16號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
+                status: "confirm",
+                isDeleted: false,
+                isHotel: true
+            },
+
+            // ================= 11/10 (二) 山線縱谷行程 =================
+            {
+                id: "ITEM-12",
+                date: "2026-11-10",
+                time: "09:00",
+                name: "🚐 11/10 山線專屬包車 (退房・行李全上車)",
+                img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://taitung-travel.com/guides/taitung-attractions-guide",
+                desc: "09:00 台東康橋商旅退房（行李全上車）➔ 太麻里、縱谷景點 ➔ 17:15 直達池上換鵝山房民宿大門口。",
+                address: "台東縣台東市中興路一段209巷16號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
+                status: "confirm",
+                isDeleted: false,
+                isTransport: true
+            },
+            {
+                id: "ITEM-13",
+                date: "2026-11-10",
+                time: "09:20",
                 name: "太麻里福興宮 (招財貓土地公廟)",
                 img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=700&q=80",
                 introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/1410",
@@ -417,106 +475,25 @@
                 isDeleted: false
             },
             {
-                id: "ITEM-10",
-                date: "2026-11-09",
-                time: "11:30",
-                name: "富岡小野柳 ＆ 加路蘭遊憩區",
-                img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/32",
-                desc: "豆腐岩與蕈狀岩地貌崢嶸，加路蘭漂流木裝置藝術與遼闊海天相映，吹風漫步好舒心。",
-                address: "台東縣台東市松江路一段500號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=富岡地質公園小野柳",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-11",
-                date: "2026-11-09",
-                time: "12:30",
-                name: "成功漁港 (午餐自理品嚐海鮮)",
-                img: "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/50",
-                desc: "臺東最新鮮的漁獲集散地，品嚐當季鮮甜生魚片與現煮海鮮湯，大啖太平洋純粹美味。",
-                address: "台東縣成功鎮港邊路19號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=成功漁港",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-12",
-                date: "2026-11-09",
-                time: "14:00",
-                name: "三仙台風景區 (跨海八拱橋)",
-                img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/53",
-                desc: "八拱跨海大橋飛躍湛藍太平洋，串連離岸珊瑚礁火山島，迎晨曦仙氣繚繞，東海岸永恆地標。",
-                address: "台東縣成功鎮基翬路74號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=三仙台風景區",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-13",
-                date: "2026-11-09",
-                time: "15:30",
-                name: "巴歌浪船屋 (原民Live吉他下午茶)",
-                img: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/225",
-                desc: "太平洋浪濤聲中的原民藝術木雕方舟，伴隨在地創作歌手吉他彈唱與下午茶，極致愜意放鬆。",
-                address: "台東縣長濱鄉三間村大俱來1-7號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=巴歌浪船屋藝術園區",
-                status: "confirm",
-                isDeleted: false
-            },
-            {
                 id: "ITEM-14",
-                date: "2026-11-09",
-                time: "16:45",
-                name: "金樽咖啡 ＆ 陸連島眺望",
-                img: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.eastcoast-nsa.gov.tw/zh-tw/attractions/detail/47",
-                desc: "座落於金樽遊憩區高處，俯瞰全台唯一正在生長陸連島與衝浪金浪，伴隨咖啡香眺望海天一色。",
-                address: "台東縣東河鄉七里橋11號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=金樽咖啡",
+                date: "2026-11-10",
+                time: "09:50",
+                name: "太麻里華源觀景台 (天空之鏡)",
+                img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=700&q=80",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/1344",
+                desc: "俯瞰南迴絕美弧形海灣，蓄水池映出太平洋水天一色，被譽為台東最迷人無死角天空之鏡。",
+                address: "台東縣太麻里鄉華源村",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=太麻里華源觀景台",
                 status: "confirm",
                 isDeleted: false
             },
-
-            // 11/10
             {
                 id: "ITEM-15",
                 date: "2026-11-10",
-                time: "09:00",
-                name: "🚐 11/10 山線專屬包車 (退房・行李全上車)",
-                img: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/",
-                desc: "09:00 康橋退房行李全數上包車 ➔ 縱谷線 ➔ 17:15 抵達池上換鵝山房民宿大門口！",
-                address: "台東縣台東市中興路一段209巷16號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=康橋商旅台東館",
-                status: "confirm",
-                isDeleted: false,
-                isTransport: true
-            },
-            {
-                id: "ITEM-16",
-                date: "2026-11-10",
-                time: "10:00",
-                name: "初鹿牧場",
-                img: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.chuluranch.com.tw/",
-                desc: "全台最大坡地牧場，青翠草原綿延起伏，品嚐濃純香現擠鮮奶與乳酪，親近牛羊自然野趣。",
-                address: "台東縣卑南鄉明峰村牧場1號",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=初鹿牧場",
-                status: "consider",
-                isDeleted: false
-            },
-            {
-                id: "ITEM-17",
-                date: "2026-11-10",
                 time: "11:30",
-                name: "台東原生應用植物園 (藥草火鍋午餐)",
+                name: "台東原生應用植物園 (11:30 藥草火鍋午餐)",
                 img: "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://yuan-sen.com.tw/",
+                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/278",
                 desc: "中央山脈山腳下的藥用植物王國，品嚐養生氽燙藥草火鍋，遠眺縱谷綠意，身心舒暢開闊。",
                 address: "台東縣卑南鄉明峰村試驗場8號",
                 mapUrl: "https://www.google.com/maps/search/?api=1&query=台東原生應用植物園",
@@ -524,12 +501,12 @@
                 isDeleted: false
             },
             {
-                id: "ITEM-18",
+                id: "ITEM-16",
                 date: "2026-11-10",
-                time: "13:00",
-                name: "美濃冰品 (半山腰手作冰品)",
+                time: "12:50",
+                name: "美濃冰品 (半山腰手作在地冰品)",
                 img: "https://images.unsplash.com/photo-1501443762994-82bd5dace89a?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/shop/details/809",
+                introUrl: "https://www.minoiceshop.com/",
                 desc: "隱身山腰竹林裡的在地手作冰品，採用在地釋迦、洛神與紅烏龍入味，綿密沁涼天然無負擔。",
                 address: "台東縣卑南鄉美濃村高台2號",
                 mapUrl: "https://www.google.com/maps/search/?api=1&query=美濃冰品",
@@ -537,10 +514,10 @@
                 isDeleted: false
             },
             {
-                id: "ITEM-19",
+                id: "ITEM-17",
                 date: "2026-11-10",
-                time: "13:30",
-                name: "布農部落休閒農場 (八部合音與射箭)",
+                time: "13:20",
+                name: "布農部落休閒農場 (看 13:30 下午場八部合音)",
                 img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=700&q=80",
                 introUrl: "https://www.bunun.org.tw/",
                 desc: "沉浸布農原鄉文化，震撼聆聽祈禱小米豐收八部合音，親手體驗傳統射箭與部落手作溫暖。",
@@ -550,54 +527,41 @@
                 isDeleted: false
             },
             {
-                id: "ITEM-20",
+                id: "ITEM-18",
                 date: "2026-11-10",
-                time: "15:30",
-                name: "鹿野在地茶莊 (龍田綠色隧道)",
+                time: "15:15",
+                name: "阿榮自然農村 (阿榮柑仔店・農村手作DIY)",
                 img: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://tour.taitung.gov.tw/zh-tw/attraction/details/465",
-                desc: "穿梭龍田綠色隧道，漫遊茶園換穿採茶裝，席地品茗甘醇蜜香紅烏龍，體驗慢活縱谷生活。",
-                address: "台東縣鹿野鄉龍田村",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=龍田綠色隧道",
+                introUrl: "https://www.redoolongtaitung.com/brand-stories/new-generation-tea-flavor-artisan-making-tea-fun-fresh-and-approachable",
+                desc: "鹿野龍田綠意環抱的友善農村空間，品嚐柴燒香蕉脆片與農作特產，體驗純樸手作DIY感受土地溫度。",
+                address: "台東縣鹿野鄉龍田村光榮路163號",
+                mapUrl: "https://www.google.com/maps/search/?api=1&query=阿榮柑仔店",
                 status: "confirm",
                 isDeleted: false
             },
             {
-                id: "ITEM-21",
+                id: "ITEM-19",
                 date: "2026-11-10",
                 time: "17:15",
-                name: "🏡 入住：池上換鵝山房民宿",
+                name: "🏡 入住：池上換鵝山房民宿 (大門口卸客)",
                 img: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.facebook.com/goosebnb/",
-                desc: "17:15 包車直達大門口！池上充滿書法墨香的典雅民宿，主人字畫親和，步行即可漫遊老街與水圳。",
+                introUrl: "https://www.huan-e.url.tw/",
+                desc: "17:15 跨區送達終點！池上充滿書法墨香的典雅民宿，主人字畫親和，步行即可漫遊老街與水圳。",
                 address: "台東縣池上鄉中山路251號",
                 mapUrl: "https://www.google.com/maps/search/?api=1&query=台東縣池上鄉中山路251號+換鵝山房",
                 status: "confirm",
                 isDeleted: false,
                 isHotel: true
             },
-            {
-                id: "ITEM-22",
-                date: "2026-11-10",
-                time: "18:00",
-                name: "池上伯朗大道 ＆ 大坡池",
-                img: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.erv-nsa.gov.tw/zh-tw/attractions/detail/68",
-                desc: "廣袤縱谷無垠金黃稻浪，筆直天堂路沒有一支電線桿，金城武樹下騎行享受微風田園詩篇。",
-                address: "台東縣池上鄉伯朗大道",
-                mapUrl: "https://www.google.com/maps/search/?api=1&query=池上伯朗大道",
-                status: "confirm",
-                isDeleted: false
-            },
 
-            // 11/11
+            // ================= 11/11 (三) 池上漫遊與返程 =================
             {
-                id: "ITEM-23",
+                id: "ITEM-20",
                 date: "2026-11-11",
                 time: "14:28",
                 name: "🚄 返程火車：台鐵自強號3000 (車次 477)",
                 img: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=700&q=80",
-                introUrl: "https://www.railway.gov.tw/",
+                introUrl: "https://www.railway.gov.tw/tra-tip-web/tip/tip001/tip112/gobytime",
                 desc: "14:28【池上】出發 ➔ 19:12 抵達【桃園】火車站。請提前20分鐘抵達池上火車站候車。",
                 address: "池上火車站",
                 mapUrl: "https://www.google.com/maps/search/?api=1&query=池上火車站",
@@ -606,6 +570,13 @@
                 isTransport: true
             }
         ];
+
+        // 切換某天的「隱藏 / 展開」狀態
+        function toggleDayCollapse(dateStr) {
+            collapsedDays[dateStr] = !collapsedDays[dateStr];
+            localStorage.setItem('taitung_collapsed_days', JSON.stringify(collapsedDays));
+            renderLanes();
+        }
 
         function setDisplayMode(mode) {
             currentDisplayMode = mode;
@@ -626,7 +597,6 @@
             renderLanes();
         }
 
-        // 單重括號日期選單
         function updateDateSelectOptions() {
             const select = document.getElementById('form-date');
             select.innerHTML = '';
@@ -653,23 +623,42 @@
             let dayItemCounts = {};
             travelDates.forEach(d => dayItemCounts[d.date] = 0);
 
+            // 1. 建立各日期的泳道
             travelDates.forEach(day => {
+                const isCollapsed = !!collapsedDays[day.date];
+
                 const lane = document.createElement('div');
-                lane.className = 'lane-column bg-[#FAF6EE] border-2 border-[#E3D9C6] rounded-2xl p-4 flex flex-col shadow-xs';
+                lane.className = `lane-column ${isCollapsed ? 'lane-column-collapsed bg-stone-100 border-dashed border-stone-300' : 'bg-[#FAF6EE] border-[#E3D9C6]'} border-2 rounded-2xl p-4 flex flex-col shadow-xs transition-all`;
+
+                const toggleBtnHtml = isCollapsed 
+                    ? `<button onclick="toggleDayCollapse('${day.date}')" class="bg-[#2D5A43] hover:bg-[#1E3F2E] text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1">
+                         <span>👁️</span> 展開行程
+                       </button>`
+                    : `<button onclick="toggleDayCollapse('${day.date}')" class="bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold px-2.5 py-1 rounded-xl transition flex items-center gap-1">
+                         <span>🙈</span> 隱藏
+                       </button>`;
+
                 lane.innerHTML = `
-                    <div class="flex justify-between items-center mb-3 pb-2 border-b-2 border-[#D7C9AF]">
+                    <div class="flex justify-between items-start mb-3 pb-2 border-b-2 ${isCollapsed ? 'border-stone-200' : 'border-[#D7C9AF]'}">
                         <div>
-                            <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">${day.date}</span>
-                            <h3 class="text-lg font-extrabold text-[#3B2F1D] mt-1">${day.title}</h3>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">${day.date}</span>
+                                <span id="badge-count-${day.date}" class="text-[11px] font-bold bg-[#E8DCBF] text-[#4E3D24] px-2 py-0.5 rounded-full">0 項</span>
+                            </div>
+                            <h3 class="text-lg font-extrabold ${isCollapsed ? 'text-stone-500' : 'text-[#3B2F1D]'} mt-1">${day.title}</h3>
+                            ${isCollapsed ? '<div class="text-[11px] text-emerald-700 font-bold mt-0.5">✨ 本日行程已走完 (已收合)</div>' : ''}
                         </div>
-                        <span id="badge-count-${day.date}" class="text-xs font-bold bg-[#E8DCBF] text-[#4E3D24] px-2.5 py-1 rounded-full">0 項</span>
+                        <div class="shrink-0 ml-2">
+                            ${toggleBtnHtml}
+                        </div>
                     </div>
-                    <div id="lane-items-${day.date}" class="space-y-4 flex-1 min-h-[160px]" data-date="${day.date}">
+                    <div id="lane-items-${day.date}" class="space-y-4 flex-1 min-h-[160px] ${isCollapsed ? 'hidden' : ''}" data-date="${day.date}">
                     </div>
                 `;
                 container.appendChild(lane);
             });
 
+            // 2. 放置卡片
             scheduleItems.forEach(item => {
                 if (item.isDeleted) {
                     trashCount++;
@@ -872,7 +861,8 @@
             alert(`已成功建立 ${dateVal} 的專屬日程泳道！可向右滑動查看。`);
         }
 
-        https://script.google.com/macros/s/AKfycbwfom3AxSIcB4y_6eSWMZjfrBQCOb4Q4PlYXvPEnROgzZyLzXAGeuaIRFzKVTQLJ6cCjg/exec, function(e) {
+        // 新增景點並非同步寫入 Google 試算表
+        document.getElementById('add-spot-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const date = document.getElementById('form-date').value;
@@ -904,7 +894,17 @@
             scheduleItems.push(newItem);
             renderLanes();
             document.getElementById('add-spot-form').reset();
-            alert(`景點【${name}】已成功加入 ${date} 的行程看板中！`);
+
+            fetch(GAS_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newItem)
+            }).then(() => {
+                alert(`景點【${name}】已成功加入，並已同步寫入 Google 試算表！`);
+            }).catch(err => {
+                console.error("試算表連線失敗：", err);
+            });
         });
 
         function softDeleteItem(id) {
