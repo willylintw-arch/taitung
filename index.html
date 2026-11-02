@@ -108,7 +108,7 @@
                     <span>🍃</span> 2026 臺東舒活之旅・行程戰情室
                 </h1>
                 <p class="text-xs sm:text-sm text-emerald-100 mt-0.5">
-                    每日行程支援一鍵隱藏與開啟 ｜ 寬版全向滑動 ｜ 敬老放大字體
+                    支援封存永久刪除 ｜ 每日行程一鍵收合 ｜ 寬版全向滑動
                 </p>
             </div>
 
@@ -160,13 +160,13 @@
             </div>
         </section>
 
-        <!-- 2. 假刪除封存回收桶 -->
+        <!-- 2. 假刪除封存回收桶 (支援永久刪除與復原) -->
         <section class="ghibli-card p-5 border-dashed border-2 border-stone-300">
-            <div class="flex justify-between items-center mb-3">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3">
                 <h3 class="text-base sm:text-lg font-bold text-stone-700 flex items-center gap-2">
                     <span>📦</span> 暫時封存之行程項目 (<span id="trash-count" class="text-amber-700 font-bold">0</span>)
                 </h3>
-                <span class="text-xs sm:text-sm text-stone-500">假刪除不排入行車路線，可隨時點擊「復原」重新加入</span>
+                <span class="text-xs sm:text-sm text-stone-500">可隨時點擊「復原」重新加入看板，或點擊「永久刪除」徹底移除</span>
             </div>
             <div id="trash-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
         </section>
@@ -274,13 +274,12 @@
     </main>
 
     <footer class="bg-[#2D5A43] text-emerald-100 text-center py-6 text-sm mt-8 border-t-4 border-[#3D7055]">
-        2026 臺東深度舒活之旅 ｜ 每日行程一鍵隱藏/開啟 × 全向滑動寬版看板
+        2026 臺東深度舒活之旅 ｜ 支援封存永久刪除 × 每日行程一鍵收合 × 全向滑動寬版看板
     </footer>
 
     <!-- JavaScript 核心邏輯 -->
     <script>
-        // 請確保此處填入您在 Google Apps Script 取得的 Web App 部署網址
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyMYgVYrxwW_FgYZLbBAijs568Wi0vFi5Yy-x-nIboYbWHzzzHXCcobsw5eDtVPPKc/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbz_您的腳本ID/exec";
 
         let currentDisplayMode = 'photo';
 
@@ -294,7 +293,6 @@
             { date: "2026-11-11", title: "11/11 (三) 池上漫遊與返程" }
         ];
 
-        // 包含更新後介紹網址的完整行程資料清單
         let scheduleItems = [
             // ================= 11/8 (日) 市區與啟程 =================
             {
@@ -659,20 +657,25 @@
                 container.appendChild(lane);
             });
 
-            // 2. 放置卡片
+            // 2. 放置卡片與封存回收桶渲染
             scheduleItems.forEach(item => {
                 if (item.isDeleted) {
                     trashCount++;
                     const trashCard = document.createElement('div');
-                    trashCard.className = 'bg-stone-100 border border-stone-300 rounded-xl p-3 flex justify-between items-center opacity-80';
+                    trashCard.className = 'bg-stone-100 border border-stone-300 rounded-xl p-3 flex justify-between items-center opacity-90 shadow-2xs';
                     trashCard.innerHTML = `
                         <div class="truncate mr-2">
-                            <span class="font-bold text-stone-600 line-through text-base">${item.name}</span>
+                            <span class="font-bold text-stone-700 line-through text-base block truncate">${item.name}</span>
                             <span class="text-xs text-stone-400 block">${item.date} ｜ ${item.time}</span>
                         </div>
-                        <button onclick="restoreItem('${item.id}')" class="bg-[#2D5A43] hover:bg-[#204030] text-white px-3 py-1.5 rounded-lg text-sm font-bold shrink-0">
-                            復原
-                        </button>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="restoreItem('${item.id}')" class="bg-[#2D5A43] hover:bg-[#204030] text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                                復原
+                            </button>
+                            <button onclick="hardDeleteItem('${item.id}')" class="bg-rose-700 hover:bg-rose-800 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                                永久刪除
+                            </button>
+                        </div>
                     `;
                     trashContainer.appendChild(trashCard);
                     return;
@@ -862,7 +865,6 @@
             alert(`已成功建立 ${dateVal} 的專屬日程泳道！可向右滑動查看。`);
         }
 
-        // 新增景點並非同步寫入 Google 試算表
         document.getElementById('add-spot-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -896,7 +898,7 @@
             renderLanes();
             document.getElementById('add-spot-form').reset();
 
-            fetch("https://script.google.com/macros/s/AKfycbyMYgVYrxwW_FgYZLbBAijs568Wi0vFi5Yy-x-nIboYbWHzzzHXCcobsw5eDtVPPKc/exec", {
+            fetch(GAS_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
@@ -908,6 +910,7 @@
             });
         });
 
+        // 假刪除 (移入封存區)
         function softDeleteItem(id) {
             const item = scheduleItems.find(x => x.id === id);
             if (item) {
@@ -917,12 +920,26 @@
             }
         }
 
+        // 復原封存項目
         function restoreItem(id) {
             const item = scheduleItems.find(x => x.id === id);
             if (item) {
                 item.isDeleted = false;
                 item.status = 'confirm';
                 renderLanes();
+            }
+        }
+
+        // 【新增】永久刪除 (從資料清單徹底移除)
+        function hardDeleteItem(id) {
+            const idx = scheduleItems.findIndex(x => x.id === id);
+            if (idx !== -1) {
+                const itemName = scheduleItems[idx].name;
+                const confirmed = confirm(`確定要永久刪除【${itemName}】嗎？\n刪除後將無法再復原！`);
+                if (confirmed) {
+                    scheduleItems.splice(idx, 1);
+                    renderLanes();
+                }
             }
         }
 
